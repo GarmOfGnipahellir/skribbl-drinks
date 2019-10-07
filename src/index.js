@@ -1,74 +1,10 @@
+import qwery from 'qwery'
+import bonzo from 'bonzo'
 import parse from './parser'
-import { store, playerJoined, playerLeft, addDrinks } from './store'
+import { getPlayers, findPlayer } from './skribbl'
+import { createStore, playerJoined, playerLeft, addDrinks } from './store'
 
-let guessers = {}
-
-function parseGuess(node) {
-    const matches = /^(.+?): (.*)/g.exec(node.textContent)
-    if (matches.length >= 3) {
-        const name = matches[1]
-
-        if (!(name in guessers)) {
-            guessers[name] = 1
-        } else {
-            guessers[name]++
-        }
-
-        const containerGamePlayers = document.getElementById(
-            'containerGamePlayers'
-        )
-        for (const child of containerGamePlayers.children) {
-            const childInfo = child.children[1]
-            const childName = childInfo.children[0].textContent
-
-            if (childName.startsWith(name)) {
-                let guessesElem = childInfo.children[2]
-                if (guessesElem === undefined) {
-                    guessesElem = document.createElement('div')
-                    guessesElem.style['font-size'] = '200%'
-                }
-                guessesElem.textContent = '🍺 ' + guessers[name]
-                childInfo.appendChild(guessesElem)
-            }
-        }
-    }
-}
-
-function parseStartRound(node) {
-    if (/^(.+?) is drawing now!/g.test(node.textContent)) {
-        for (const child of containerGamePlayers.children) {
-            const childInfo = child.children[1]
-
-            let guessesElem = childInfo.children[2]
-            if (guessesElem === undefined) {
-                guessesElem = document.createElement('div')
-                guessesElem.style['font-size'] = '200%'
-            }
-            guessesElem.textContent = '🍺 ' + 0
-            childInfo.appendChild(guessesElem)
-        }
-        guessers = {}
-    }
-}
-
-function parseEndRound(node) {
-    if (/^The word was '.+?'/g.test(node.textContent)) {
-        const revealContainer = document.querySelector('.revealContainer')
-        for (let child of revealContainer.children) {
-            const name = child.children[0].textContent
-
-            const guessesElem = document.createElement('div')
-            guessesElem.className = 'score'
-            child.appendChild(guessesElem)
-
-            let guesses = 0
-            if (name in guessers) {
-                guesses = guessers[name]
-            }
-            guessesElem.innerText = '🍺 ' + guesses
-        }
-    }
-}
+let store
 
 function updateState(node) {
     const event = parse(node)
@@ -79,29 +15,57 @@ function updateState(node) {
             break
 
         case 'JOINED':
-            store.dispatch(playerJoined(event.name))
+            const player = findPlayer(event.name)
+            if (!!player) {
+                store.dispatch(playerJoined(player.name, player.id))
+            }
             break
 
         case 'LEFT':
             store.dispatch(playerLeft(event.name))
             break
     }
-
-    console.log(store.getState())
 }
 
-const boxMessages = document.getElementById('boxMessages')
-const observer = new MutationObserver(function(mutationsList, observer) {
-    for (let mutation of mutationsList) {
-        if (mutation.type === 'childList') {
-            for (let node of mutation.addedNodes) {
-                if (node.tagName.toLowerCase() == 'p') {
-                    updateState(node)
+const screenGame = qwery('#screenGame')[0]
+new MutationObserver(() => {
+    if (bonzo(screenGame).css('display') == 'none') return
+
+    const initialState = {}
+    for (const player of getPlayers()) {
+        initialState[player.name] = { drinks: 0, id: player.id }
+    }
+
+    store = createStore(initialState)
+
+    store.subscribe(() => {
+        const state = store.getState()
+
+        for (const name in state) {
+            const { drinks, id } = state[name]
+
+            const elem = qwery('#' + id)[0]
+            const infoElem = elem.children[1]
+            let guessesElem = infoElem.children[2]
+            if (guessesElem === undefined) {
+                guessesElem = document.createElement('div')
+                guessesElem.style['font-size'] = '200%'
+                infoElem.appendChild(guessesElem)
+            }
+            guessesElem.textContent = '🍺 ' + drinks
+        }
+    })
+
+    const boxMessages = qwery('#boxMessages')[0]
+    new MutationObserver(function(mutationsList) {
+        for (let mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                for (let node of mutation.addedNodes) {
+                    if (node.tagName.toLowerCase() == 'p') {
+                        updateState(node)
+                    }
                 }
             }
         }
-    }
-})
-observer.observe(boxMessages, {
-    childList: true,
-})
+    }).observe(boxMessages, { childList: true })
+}).observe(screenGame, { attributes: true })

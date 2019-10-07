@@ -1,12 +1,12 @@
 import produce from 'immer'
-import { createStore } from 'redux'
+import { createStore as reduxCreateStore } from 'redux'
 
 const PLAYER_JOINED = 'PLAYER_JOINED'
 const PLAYER_LEFT = 'PLAYER_LEFT'
 const ADD_DRINKS = 'ADD_DRINKS'
 
-export function playerJoined(name) {
-    return { type: PLAYER_JOINED, name }
+export function playerJoined(name, id) {
+    return { type: PLAYER_JOINED, name, id }
 }
 
 export function playerLeft(name) {
@@ -20,18 +20,19 @@ export function addDrinks(name, amount) {
 const reducer = produce((draft, action) => {
     switch (action.type) {
         case PLAYER_JOINED:
-            draft[action.name] = { drinks: 0, id: '' }
+            draft[action.name] = { drinks: 0, id: action.id }
             break
 
-        case PLAYER_JOINED:
+        case PLAYER_LEFT:
             delete draft[action.name]
             break
 
         case ADD_DRINKS:
-            const { name, amount } = action
-            draft[name].drinks += amount
+            draft[action.name].drinks += action.amount
             break
     }
 })
 
-export const store = createStore(reducer, {})
+export function createStore(initialState) {
+    return reduxCreateStore(reducer, initialState)
+}
