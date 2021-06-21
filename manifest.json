@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "Skribbl Drinks",
+  "version": "1.0",
+
+  "description": "Adds drink counting to Skribbl.io",
+
+  "icons": {
+    "48": "icons/border-48.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["*://skribbl.io/*"],
+      "js": ["dist/index.js"]
+    }
+  ]
+}
