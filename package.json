@@ -2,10 +2,14 @@
   "name": "skribbl-drinks",
   "scripts": {
     "bundle": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern",
-    "watch": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern -w"
+    "watch": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern -w",
+    "test": "nightwatch tests/skribbl.js"
   },
   "devDependencies": {
+    "chromedriver": "^91.0.1",
+    "geckodriver": "^2.0.0",
     "microbundle": "^0.13.3",
+    "nightwatch": "^1.7.6",
     "webextension-polyfill": "^0.8.0"
   }
 }
