@@ -1,0 +1,6 @@
+{
+    "name": "Skribbl Drinks",
+    "namespace": "Garm",
+    "match": "https://skribbl.io/*",
+    "grant": "none"
+}
