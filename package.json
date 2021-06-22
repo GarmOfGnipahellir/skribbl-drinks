@@ -3,7 +3,7 @@
   "scripts": {
     "bundle": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern",
     "watch": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern -w",
-    "test": "nightwatch tests/skribbl.js"
+    "test": "nightwatch tests/e2e/index.js"
   },
   "devDependencies": {
     "chromedriver": "^91.0.1",

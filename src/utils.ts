@@ -1,5 +1,6 @@
 export function addWaterMark(): void {
   const waterMarkNode = document.createElement("div");
+  waterMarkNode.id = "drinksWaterMark";
   waterMarkNode.style.position = "fixed";
   waterMarkNode.style.top = "9px";
   waterMarkNode.style.right = "9px";
