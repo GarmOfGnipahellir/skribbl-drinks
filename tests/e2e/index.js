@@ -7,6 +7,10 @@ describe("skribbl drinks tests", function () {
       .click(
         "#cmpbox > div.cmpboxinner > div.cmpboxbtns.cmpboxbtnscustomchoices > a.cmpboxbtn.cmpboxbtnyes.cmpboxbtnyescustomchoices"
       );
+
+    browser.switchToDrawingPlayer = function() {
+      console.log(this);
+    };
   });
 
   test("water mark is added", (browser) =>
@@ -25,13 +29,15 @@ describe("skribbl drinks tests", function () {
       })
       .windowHandles((result) => browser.switchWindow(result.value[0]))
       .waitForElementVisible("#player1")
-      .click("#buttonLobbyPlay")
+      .click("#buttonLobbyPlay");
   });
 
   test("make wrong guess", (browser) => {
-    browser
-      .waitForElementVisible("#overlay > div > div.wordContainer > div:nth-child(1)");
+    browser.switchToDrawingPlayer()
+    browser.waitForElementVisible(
+      "#overlay > div > div.wordContainer > div:nth-child(1)"
+    );
   });
 
-  after((browser) => browser.pause(1000000));
+  after((browser) => browser.pause(1_000_000));
 });
