@@ -1,4 +1,6 @@
-let word, guessing, drawing;
+const FIRST_WORD = "#overlay > div > div.wordContainer > div:nth-child(1)";
+
+let invite, word, guessing, drawing;
 
 describe("skribbl drinks tests", function () {
   before(async (browser) => {
@@ -10,15 +12,16 @@ describe("skribbl drinks tests", function () {
         "#cmpbox > div.cmpboxinner > div.cmpboxbtns.cmpboxbtnscustomchoices > a.cmpboxbtn.cmpboxbtnyes.cmpboxbtnyescustomchoices"
       )
       .click("#buttonLoginCreatePrivate")
-      .waitForElementVisible("#invite")
-      .getValue("#invite", (result) => {
-        browser
-          .openNewWindow()
-          .windowHandles((result) => browser.switchWindow(result.value[1]))
-          .url(result.value)
-          .click("#formLogin > button.btn.btn-success.btn-lg.btn-block");
-      })
-      .windowHandles((result) => browser.switchWindow(result.value[0]))
+      .waitForElementVisible("#invite");
+
+    invite = (await browser.getValue("#invite")).value;
+
+    await browser
+      .openNewWindow()
+      .switchWindow((await browser.windowHandles()).value[1])
+      .url(invite)
+      .click("#formLogin > button.btn.btn-success.btn-lg.btn-block")
+      .switchWindow((await browser.windowHandles()).value[0])
       .waitForElementVisible("#player1")
       .click("#buttonLobbyPlay");
   });
@@ -34,38 +37,34 @@ describe("skribbl drinks tests", function () {
   test("make wrong guess", async (browser) => {
     await browser
       .waitForElementVisible("#overlay > div > div.text")
-      .pause(3000)
-      .getText("#overlay > div > div.text", (result) => {
-        if (result.value != "Choose a word") {
-          browser.windowHandles((result) =>
-            browser.switchWindow(result.value[1])
-          );
-          drawing = 1;
-          guessing = 0;
-        } else {
-          drawing = 0;
-          guessing = 1;
-        }
-      })
-      .getText(
-        "#overlay > div > div.wordContainer > div:nth-child(1)",
-        (result) => {
-          word = result.value;
-          browser
-            .click("#overlay > div > div.wordContainer > div:nth-child(1)")
-            .windowHandles((result) =>
-              browser.switchWindow(result.value[guessing])
-            )
-            .sendChatMessage("not " + word);
+      .pause(3000);
 
-          browser.assert.playerDrinksEquals(guessing, 1);
-        }
-      );
+    let overlayText = (await browser.getText("#overlay > div > div.text"))
+      .value;
+    if (overlayText != "Choose a word") {
+      await browser.switchWindow((await browser.windowHandles()).value[1]);
+      drawing = 1;
+      guessing = 0;
+    } else {
+      drawing = 0;
+      guessing = 1;
+    }
+
+    word = (await browser.getText(FIRST_WORD)).value;
+
+    await browser
+      .waitForElementVisible(FIRST_WORD)
+      .click(FIRST_WORD)
+      .switchWindow((await browser.windowHandles()).value[guessing])
+      .sendChatMessage("not " + word);
+
+    await browser.assert.playerDrinksEquals(guessing, 1);
   });
 
   test("make right guess", async (browser) => {
     await browser
-      .windowHandles((result) => browser.switchWindow(result.value[guessing]))
+      .pause(1000)
+      .switchWindow((await browser.windowHandles()).value[guessing])
       .sendChatMessage(word);
 
     const player0Name = (await browser.getPlayerName(0)).value;
@@ -74,12 +73,80 @@ describe("skribbl drinks tests", function () {
     const player1Drinks = (await browser.getPlayerDrinks(1)).value;
 
     await browser.assert.containsText(
-      "#boxMessages > p:nth-child(6)",
+      "#boxMessages > p:nth-last-child(2)",
       `${player0Name} drinks ${player0Drinks}!`
     );
     await browser.assert.containsText(
-      "#boxMessages > p:nth-child(7)",
+      "#boxMessages > p:nth-last-child(1)",
       `${player1Name} drinks ${player1Drinks}!`
+    );
+  });
+
+  test("new turn", async (browser) => {
+    drawing = drawing == 0 ? 1 : 0;
+    guessing = guessing == 0 ? 1 : 0;
+
+    await browser
+      .pause(3000)
+      .switchWindow((await browser.windowHandles()).value[drawing])
+      .waitForElementVisible(FIRST_WORD);
+
+    word = (await browser.getText(FIRST_WORD)).value;
+
+    await browser.click(FIRST_WORD);
+
+    await browser.assert.playerDrinksEquals(0, 0);
+    await browser.assert.playerDrinksEquals(1, 0);
+  });
+
+  test("player joins and leaves", async (browser) => {
+    await browser
+      .openNewWindow()
+      .switchWindow((await browser.windowHandles()).value[2])
+      .url(invite)
+      .click("#formLogin > button.btn.btn-success.btn-lg.btn-block");
+
+    await browser.assert.playerDrinksEquals(2, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[0]);
+    await browser.assert.playerDrinksEquals(2, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[1]);
+    await browser.assert.playerDrinksEquals(2, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[2]);
+
+    await browser.sendChatMessage("not " + word);
+
+    await browser.assert.playerDrinksEquals(2, 1);
+    await browser.switchWindow((await browser.windowHandles()).value[0]);
+    await browser.assert.playerDrinksEquals(2, 1);
+    await browser.switchWindow((await browser.windowHandles()).value[1]);
+    await browser.assert.playerDrinksEquals(2, 1);
+    await browser.switchWindow((await browser.windowHandles()).value[2]);
+
+    await browser
+      .pause(1000)
+      .sendChatMessage(word)
+      .pause(1000)
+      .switchWindow((await browser.windowHandles()).value[guessing])
+      .sendChatMessage(word);
+
+    const player0Name = (await browser.getPlayerName(0)).value;
+    const player1Name = (await browser.getPlayerName(1)).value;
+    const player2Name = (await browser.getPlayerName(2)).value;
+    const player0Drinks = (await browser.getPlayerDrinks(0)).value;
+    const player1Drinks = (await browser.getPlayerDrinks(1)).value;
+    const player2Drinks = (await browser.getPlayerDrinks(2)).value;
+
+    await browser.assert.containsText(
+      "#boxMessages > p:nth-last-child(3)",
+      `${player0Name} drinks ${player0Drinks}!`
+    );
+    await browser.assert.containsText(
+      "#boxMessages > p:nth-last-child(2)",
+      `${player1Name} drinks ${player1Drinks}!`
+    );
+    await browser.assert.containsText(
+      "#boxMessages > p:nth-last-child(1)",
+      `${player2Name} drinks ${player2Drinks}!`
     );
   });
 

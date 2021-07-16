@@ -4,26 +4,28 @@ import {
   getPlayerNameDiv,
   getPlayerInfoDiv,
   getPlayerDrinksDiv,
+  addChatMessage,
 } from "./utils";
 import { parseMessage, MessageType } from "./parser";
 import {
+  TurnState,
   store,
   playerAdded,
   playerGuessed,
-  turnEnded,
   turnStarted,
-} from "./state";
+  turnEnded,
+} from "./store";
+import log from "./logger";
 
 const screenGame = document.getElementById("screenGame");
 const boxMessages = document.getElementById("boxMessages");
 
 function onGameStarted(): void {
-  console.log("Game started!");
+  log.info("Game started!");
 
   for (const id of getCurrentPlayers()) {
     const nameDiv = getPlayerNameDiv(id);
     let name = nameDiv.textContent;
-    console.log(nameDiv.style.color);
     if (nameDiv.style.color == "rgb(0, 0, 255)") {
       name = name.slice(0, -6);
     }
@@ -31,23 +33,35 @@ function onGameStarted(): void {
   }
 }
 
+function onTurnStarted(): void {
+  log.info("Turn started!");
+}
+
+function onTurnEnded(): void {
+  log.info("Turn ended!");
+  for (const player of store.getState().players) {
+    addChatMessage(
+      `${player.name} drinks ${player.drinks}!`
+      // "rgb(235, 163, 0)"
+    );
+  }
+}
+
 function onMessageAdded(content: string): void {
-  console.log(`Message added: ${content}`);
+  log.info(`Message added: ${content}`);
 
   const parsed = parseMessage(content);
-  console.log(`Message parsed: ${parsed}`);
+  log.info(`Message parsed: ${parsed}`);
 
   switch (parsed.type) {
     case MessageType.GUESS:
-      console.log(`${parsed.player} made a guess!`);
+      log.info(`${parsed.player} made a guess!`);
       store.dispatch(playerGuessed(parsed.player));
       break;
     case MessageType.TURN_ENDED:
-      console.log("Turn ended!");
       store.dispatch(turnEnded());
       break;
     case MessageType.TURN_STARTED:
-      console.log("Turn started!");
       store.dispatch(turnStarted());
       break;
   }
@@ -57,22 +71,37 @@ function onMessageAdded(content: string): void {
 new MutationObserver(() => {
   if (screenGame.style.display === "none") return;
   onGameStarted();
-}).observe(screenGame, { attributes: true });
 
-// look for child changes on the boxMessages element
-new MutationObserver((mutations) => {
-  for (const mutation of mutations) {
-    for (const node of mutation.addedNodes) {
-      onMessageAdded(node.textContent);
+  // look for child changes on the boxMessages element
+  new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      for (const node of mutation.addedNodes) {
+        onMessageAdded(node.textContent);
+      }
     }
-  }
-}).observe(boxMessages, { childList: true });
+  }).observe(boxMessages, { childList: true });
+}).observe(screenGame, { attributes: true });
 
 // show user that drinks are enabled
 addWaterMark();
 
+// update the UI when state changes
+let prevState = store.getState();
 store.subscribe(() => {
   const state = store.getState();
+
+  log.debug("new state: " + state);
+
+  if (state.turnState != prevState.turnState) {
+    switch (state.turnState) {
+      case TurnState.TAKING_TURN:
+        onTurnStarted();
+        break;
+      case TurnState.PRE_TURN:
+        onTurnEnded();
+        break;
+    }
+  }
 
   for (const player of state.players) {
     let drinksDiv = getPlayerDrinksDiv(player.id);
@@ -83,4 +112,6 @@ store.subscribe(() => {
     }
     drinksDiv.textContent = `${player.drinks} 🍺`;
   }
+
+  prevState = state;
 });

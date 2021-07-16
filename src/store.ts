@@ -4,7 +4,6 @@ import {
   PayloadAction,
   current,
 } from "@reduxjs/toolkit";
-import { addChatMessage } from "./utils";
 
 export interface PlayerState {
   id: number;
@@ -12,11 +11,18 @@ export interface PlayerState {
   drinks: number;
 }
 
+export enum TurnState {
+  PRE_TURN,
+  TAKING_TURN,
+}
+
 export interface GameState {
+  turnState: TurnState;
   players: PlayerState[];
 }
 
 const initialState: GameState = {
+  turnState: TurnState.PRE_TURN,
   players: [],
 };
 
@@ -41,23 +47,19 @@ const gameSlice = createSlice({
         }
       }
     },
-    turnEnded: (state) => {
-      for (const player of state.players) {
-        addChatMessage(
-          `${player.name} drinks ${player.drinks}!`,
-          "rgb(0, 0, 255)"
-        );
-      }
-    },
     turnStarted: (state) => {
+      state.turnState = TurnState.TAKING_TURN;
       for (const player of state.players) {
         player.drinks = 0;
       }
     },
+    turnEnded: (state) => {
+      state.turnState = TurnState.PRE_TURN;
+    },
   },
 });
 
-export const { playerAdded, playerGuessed, turnEnded, turnStarted } =
+export const { playerAdded, playerGuessed, turnStarted, turnEnded } =
   gameSlice.actions;
 
 export const store = configureStore({
