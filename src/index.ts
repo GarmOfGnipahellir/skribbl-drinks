@@ -14,6 +14,7 @@ import {
   playerGuessed,
   turnStarted,
   turnEnded,
+  playerRemoved,
 } from "./store";
 import log from "./logger";
 
@@ -65,6 +66,9 @@ function onMessageAdded(content: string): void {
           store.dispatch(playerAdded({ id, name }));
         }
       }
+      break;
+    case MessageType.PLAYER_LEAVE:
+      store.dispatch(playerRemoved(parsed.player));
       break;
     case MessageType.TURN_END:
       store.dispatch(turnEnded());

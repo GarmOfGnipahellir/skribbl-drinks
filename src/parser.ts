@@ -2,6 +2,7 @@ export enum MessageType {
   TURN_END,
   TURN_START,
   PLAYER_JOIN,
+  PLAYER_LEAVE,
   PLAYER_GUESS,
   UNKNOWN,
 }
@@ -27,6 +28,11 @@ export function parseMessage(content: string): ParsedMessage {
   matches = /(.+?) joined./g.exec(content);
   if (!!matches) {
     return { type: MessageType.PLAYER_JOIN, player: matches[1] };
+  }
+
+  matches = /(.+?) left./g.exec(content);
+  if (!!matches) {
+    return { type: MessageType.PLAYER_LEAVE, player: matches[1] };
   }
 
   matches = /^(.+?): .*/g.exec(content);

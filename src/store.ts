@@ -40,6 +40,13 @@ const gameSlice = createSlice({
         drinks: 0,
       });
     },
+    playerRemoved: (state, action: PayloadAction<string>) => {
+      for (let i = 0; i < state.players.length; i++) {
+        if (state.players[i].name == action.payload) {
+          state.players.splice(i, 1);
+        }
+      }
+    },
     playerGuessed: (state, action: PayloadAction<string>) => {
       for (let i = 0; i < state.players.length; i++) {
         if (state.players[i].name == action.payload) {
@@ -59,8 +66,13 @@ const gameSlice = createSlice({
   },
 });
 
-export const { playerAdded, playerGuessed, turnStarted, turnEnded } =
-  gameSlice.actions;
+export const {
+  playerAdded,
+  playerRemoved,
+  playerGuessed,
+  turnStarted,
+  turnEnded,
+} = gameSlice.actions;
 
 export const store = configureStore({
   reducer: gameSlice.reducer,

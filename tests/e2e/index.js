@@ -99,7 +99,7 @@ describe("skribbl drinks tests", function () {
     await browser.assert.playerDrinksEquals(1, 0);
   });
 
-  test("player joins and leaves", async (browser) => {
+  test("player join / leave", async (browser) => {
     await browser
       .openNewWindow()
       .switchWindow((await browser.windowHandles()).value[2])
@@ -148,6 +148,20 @@ describe("skribbl drinks tests", function () {
       "#boxMessages > p:nth-last-child(1)",
       `${player2Name} drinks ${player2Drinks}!`
     );
+
+    await browser
+      .switchWindow((await browser.windowHandles()).value[2])
+      .url(browser.launchUrl)
+      .pause(1000)
+      .url(invite)
+      .click("#formLogin > button.btn.btn-success.btn-lg.btn-block");
+
+    await browser.assert.playerDrinksEquals(3, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[0]);
+    await browser.assert.playerDrinksEquals(3, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[1]);
+    await browser.assert.playerDrinksEquals(3, 0);
+    await browser.switchWindow((await browser.windowHandles()).value[2]);
   });
 
   after((browser) => browser.pause(1_000_000));
