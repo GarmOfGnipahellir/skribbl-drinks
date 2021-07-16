@@ -1,9 +1,9 @@
 export declare enum MessageType {
-    UNKNOWN = 0,
-    GUESS = 1,
-    CORRECT_GUESS = 2,
-    TURN_ENDED = 3,
-    TURN_STARTED = 4
+    TURN_END = 0,
+    TURN_START = 1,
+    PLAYER_JOIN = 2,
+    PLAYER_GUESS = 3,
+    UNKNOWN = 4
 }
 export interface ParsedMessage {
     type: MessageType;

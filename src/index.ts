@@ -54,14 +54,22 @@ function onMessageAdded(content: string): void {
   log.info(`Message parsed: ${parsed}`);
 
   switch (parsed.type) {
-    case MessageType.GUESS:
+    case MessageType.PLAYER_GUESS:
       log.info(`${parsed.player} made a guess!`);
       store.dispatch(playerGuessed(parsed.player));
       break;
-    case MessageType.TURN_ENDED:
+    case MessageType.PLAYER_JOIN:
+      for (const id of getCurrentPlayers()) {
+        const name = getPlayerNameDiv(id).textContent;
+        if (name == parsed.player) {
+          store.dispatch(playerAdded({ id, name }));
+        }
+      }
+      break;
+    case MessageType.TURN_END:
       store.dispatch(turnEnded());
       break;
-    case MessageType.TURN_STARTED:
+    case MessageType.TURN_START:
       store.dispatch(turnStarted());
       break;
   }
