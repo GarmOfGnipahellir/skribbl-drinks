@@ -1,11 +1,34 @@
-import { addWaterMark } from "./utils";
+import {
+  addWaterMark,
+  getCurrentPlayers,
+  getPlayerNameDiv,
+  getPlayerInfoDiv,
+  getPlayerDrinksDiv,
+} from "./utils";
 import { parseMessage, MessageType } from "./parser";
+import {
+  store,
+  playerAdded,
+  playerGuessed,
+  turnEnded,
+  turnStarted,
+} from "./state";
 
 const screenGame = document.getElementById("screenGame");
 const boxMessages = document.getElementById("boxMessages");
 
 function onGameStarted(): void {
   console.log("Game started!");
+
+  for (const id of getCurrentPlayers()) {
+    const nameDiv = getPlayerNameDiv(id);
+    let name = nameDiv.textContent;
+    console.log(nameDiv.style.color);
+    if (nameDiv.style.color == "rgb(0, 0, 255)") {
+      name = name.slice(0, -6);
+    }
+    store.dispatch(playerAdded({ id, name }));
+  }
 }
 
 function onMessageAdded(content: string): void {
@@ -16,7 +39,16 @@ function onMessageAdded(content: string): void {
 
   switch (parsed.type) {
     case MessageType.GUESS:
-      console.log(`${parsed.player} made a guess!`)
+      console.log(`${parsed.player} made a guess!`);
+      store.dispatch(playerGuessed(parsed.player));
+      break;
+    case MessageType.TURN_ENDED:
+      console.log("Turn ended!");
+      store.dispatch(turnEnded());
+      break;
+    case MessageType.TURN_STARTED:
+      console.log("Turn started!");
+      store.dispatch(turnStarted());
       break;
   }
 }
@@ -38,3 +70,17 @@ new MutationObserver((mutations) => {
 
 // show user that drinks are enabled
 addWaterMark();
+
+store.subscribe(() => {
+  const state = store.getState();
+
+  for (const player of state.players) {
+    let drinksDiv = getPlayerDrinksDiv(player.id);
+    if (drinksDiv == undefined) {
+      drinksDiv = document.createElement("div");
+      drinksDiv.className = "drinks";
+      getPlayerInfoDiv(player.id).appendChild(drinksDiv);
+    }
+    drinksDiv.textContent = `${player.drinks} 🍺`;
+  }
+});

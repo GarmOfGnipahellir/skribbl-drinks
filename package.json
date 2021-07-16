@@ -1,15 +1,16 @@
 {
   "name": "skribbl-drinks",
   "scripts": {
-    "bundle": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern",
-    "watch": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern -w",
-    "test": "nightwatch tests/e2e/index.js"
+    "bundle": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern --define process.env.NODE_ENV=production",
+    "watch": "microbundle -i src/index.ts -o dist/index.js --no-pkg-main -f modern -w --define process.env.NODE_ENV=production",
+    "test": "nightwatch"
   },
   "devDependencies": {
     "chromedriver": "^91.0.1",
     "geckodriver": "^2.0.0",
     "microbundle": "^0.13.3",
     "nightwatch": "^1.7.6",
-    "webextension-polyfill": "^0.8.0"
+    "webextension-polyfill": "^0.8.0",
+    "@reduxjs/toolkit": "^1.6.0"
   }
 }
