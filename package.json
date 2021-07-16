@@ -13,6 +13,24 @@
     "loglevel-plugin-prefix": "^0.8.4",
     "microbundle": "^0.13.3",
     "nightwatch": "^1.7.6",
+    "web-ext": "^6.2.0",
     "webextension-polyfill": "^0.8.0"
+  },
+  "webExt": {
+    "ignoreFiles": [
+      "?(src|tests*)",
+      "*.log",
+      "nightwatch.conf.js",
+      "package-lock.json",
+      "package.json"
+    ],
+    "run": {
+      "startUrl": [
+        "skribbl.io"
+      ]
+    },
+    "build": {
+      "overwriteDest": true
+    }
   }
 }
